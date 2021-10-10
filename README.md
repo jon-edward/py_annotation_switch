@@ -1,2 +1,2 @@
 # py_annotation_switch
-A hack for writing switch statements with type annotations in Python.
+A hack for writing switch statements in type annotations for Python.
