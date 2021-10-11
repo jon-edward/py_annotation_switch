@@ -8,5 +8,5 @@ You most definitely should not use this in any real capacity, for any project, e
 Simplest case (ha):
 ```py
 from __future__ import annotations
-
+from annotation_switch
 ```
