@@ -2,8 +2,8 @@
 A hack for writing switch statements in type annotations for Python.
 
 ## Why should I use this?
-You most definitely should not use this in any real capacity, for any project, ever. It is fun as a proof-of-concept, however.
-
+You most definitely should not use this in any real capacity, for any project, ever. It is fun as a proof-of-concept, however. *This is done solely for entertainment purposes.*
+ 
 ## How do I use this?
 `Switch` is the switch-case implementation, used as a context manager. Annotating the designated `keyword` (defaulting to `case`) defines cases. 
 
@@ -14,7 +14,7 @@ Cases are in the form:
 ))
 ```
 
-The return value of the case is the last item in the statements tuple.
+The return value of the case is what the last item in the statements tuple evaluates to.
 
 Simplest case (ha):
 ```py
