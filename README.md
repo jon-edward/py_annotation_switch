@@ -80,3 +80,5 @@ with switch_case:
 
 #  raises SwitchCaseNotValidError("pineapple")
 ```
+
+*Note: After the switch statement is exited at the resolution of the context manager, the `Switch` object is converted to an `OutputWrapper` holding only an `output` member. This is to encourage the user to not reuse the `Switch` object, which might have unintended effects.*
