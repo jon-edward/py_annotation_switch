@@ -8,6 +8,7 @@ _PREDEFINED_CASE = object()
 
 
 class Config:
+    """Defines how switch cases operate."""
     __slots__ = ["keyword", "defaults_to_none"]
 
     def __init__(self):
@@ -31,6 +32,7 @@ class OutputWrapper:
 
 
 class Switch:
+"""A context-manager implementation of a switch-case."""
 
     def __init__(self, with_value):
         self.with_value = with_value
