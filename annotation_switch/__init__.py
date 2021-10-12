@@ -66,7 +66,11 @@ class _IAnnotations(ABC):
         raise NotImplemented
 
 
-@lambda c: c()
+def __c(w):
+    return w()
+
+
+@__c
 class __annotations__(_IAnnotations):
     cases = {}
     default = _PREDEFINED_CASE
