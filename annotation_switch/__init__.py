@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 _PREDEFINED_CASE = object()
 
@@ -32,11 +32,12 @@ class OutputWrapper:
 
 
 class Switch:
-"""A context-manager implementation of a switch-case."""
+    """A context-manager implementation of a switch-case."""
 
-    def __init__(self, with_value):
+    def __init__(self, with_value, scope: Optional[dict] = None):
         self.with_value = with_value
         self.output = None
+        self.scope = {} if scope is None else scope
 
     def __enter__(self):
         __annotations__.clear()
@@ -44,7 +45,7 @@ class Switch:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Resolves value to a case, runs code associated with case, and forces Switch to be unusable as a Switch
         statement again."""
-        self.output = __annotations__.resolve(self.with_value)
+        self.output = __annotations__.resolve(self.with_value, self.scope)
         __annotations__.clear()
         self.__dict__ = {"output": self.output}
         self.__class__ = OutputWrapper
@@ -56,7 +57,7 @@ class _IAnnotations(ABC):
         """Updates cases in the current context."""
         raise NotImplemented
 
-    def resolve(self, value):
+    def resolve(self, value, scope):
         """Resolves a value to either the its corresponding case, a default case, or None."""
         raise NotImplemented
 
@@ -88,7 +89,7 @@ class __annotations__(_IAnnotations):
         self.cases = {}
         self.default = _PREDEFINED_CASE
 
-    def resolve(self, value):
+    def resolve(self, value: Any, scope: dict):
         try:
             code = self.cases[value]
         except KeyError:
@@ -99,7 +100,7 @@ class __annotations__(_IAnnotations):
                     raise SwitchCaseNotValidError(value)
             else:
                 code = self.default
-        return eval(code)[-1]
+        return eval(code, scope)[-1]
 
 
 def _get_matching_bracket_position(check_string: str):
