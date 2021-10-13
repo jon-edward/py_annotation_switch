@@ -32,7 +32,13 @@ class OutputWrapper:
 
 
 class Switch:
-    """A context-manager implementation of a switch-case."""
+    """A context-manager implementation of a switch-case.
+
+    Annotations must be in the form:
+    [keyword]: (*case_identifiers, (*statements,))
+
+    Notice: "statements" has to be a tuple.
+    """
 
     def __init__(self, with_value, scope: Optional[dict] = None):
         self.with_value = with_value
