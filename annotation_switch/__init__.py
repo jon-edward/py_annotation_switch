@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC
+import ast
+from ast import Expression, Constant, Name
 from dataclasses import dataclass
 from typing import Any, Optional
 
@@ -9,11 +11,12 @@ _PREDEFINED_CASE = object()
 
 class Config:
     """Defines how switch cases operate."""
-    __slots__ = ["keyword", "defaults_to_none"]
+    __slots__ = ["keyword", "defaults_to_none", "fallthrough"]
 
     def __init__(self):
         self.keyword = "case"
         self.defaults_to_none = True
+        self.fallthrough = False
 
 
 class SwitchCaseNotValidError(Exception):
@@ -73,6 +76,41 @@ class _IAnnotations(ABC):
         raise NotImplemented
 
 
+def parse_annotation(val):
+    a = ast.parse(val, mode="eval")
+    if isinstance(a, Expression):
+        return a
+    else:
+        raise Exception(f"Invalid AST: {a}")
+
+
+class CaseIdentifierNotConstantError(Exception):
+    pass
+
+
+class _Case:
+    def __init__(self, value_str: str):
+        self.value_str = value_str
+        expr = parse_annotation(value_str)
+        identifiers = set()
+        code = None
+        self.is_default_case = False
+
+        for ind, elem in enumerate(expr.body.elts):
+            if not isinstance(elem, Constant) and ind != len(expr.body.elts) - 1:
+                if isinstance(elem, Name) and elem.id == "default":
+                    self.is_default_case = True
+                else:
+                    raise CaseIdentifierNotConstantError(f"{elem} -> case identifier number: {ind}")
+            elif ind != len(expr.body.elts) - 1:
+                identifiers.add(elem.value)
+            else:
+                code = expr
+
+        self.identifiers = identifiers
+        self.code = code
+
+
 def __c(w):
     return w()
 
@@ -86,65 +124,35 @@ class __annotations__(_IAnnotations):
         if not key == CONFIG.keyword:
             return
 
-        idx = _get_matching_bracket_position(value[:-1])
-        identifier = value[1:idx]
-        code = value[idx:-1]
-
-        for elem in eval("{" + identifier + "}"):
-            if elem == default:
-                self.default = code
-            else:
-                self.cases[elem] = code
+        case = _Case(value)
+        for identifier in case.identifiers:
+            self.cases[identifier] = case.code
+        if case.is_default_case:
+            self.default = case.code
 
     def clear(self):
         self.cases = {}
         self.default = _PREDEFINED_CASE
 
     def resolve(self, value: Any, scope: dict):
+
+        def compile_and_eval(c, s):
+            return eval(compile(c, filename="<unused>", mode="eval"), s)
+
         try:
-            code = self.cases[value]
+            code_result = compile_and_eval(self.cases[value], scope)
         except KeyError:
             if self.default == _PREDEFINED_CASE:
                 if CONFIG.defaults_to_none:
-                    code = "(None,)"
+                    code_result = (None,)
                 else:
                     raise SwitchCaseNotValidError(value)
             else:
-                code = self.default
+                code_result = compile_and_eval(self.default, scope)
 
-        code_result = eval(code, scope)
+        code_result = code_result[-1]
 
-        return code_result[-1]
-
-
-def _get_matching_bracket_position(check_string: str):
-    """Gets first matching bracket position going from last character. Respects parenthesis in quotes."""
-    bracket_tally = 0
-
-    class QuoteState:
-        DEFAULT = 0
-        DOUBLE_QUOTE = 1
-        SINGLE_QUOTE = 2
-
-    quote_state = QuoteState.DEFAULT
-
-    for idx, item in enumerate(reversed(check_string)):
-        if quote_state == QuoteState.DEFAULT:
-            if item == "(":
-                bracket_tally -= 1
-            elif item == ")":
-                bracket_tally += 1
-            elif item == "'":
-                quote_state = QuoteState.SINGLE_QUOTE
-            elif item == '"':
-                quote_state = QuoteState.DOUBLE_QUOTE
+        if isinstance(code_result, tuple):
+            return code_result[-1]
         else:
-            if item == "'" and quote_state == QuoteState.SINGLE_QUOTE:
-                quote_state = QuoteState.DEFAULT
-            elif item == '"' and quote_state == QuoteState.DOUBLE_QUOTE:
-                quote_state = QuoteState.DEFAULT
-
-        if bracket_tally == 0:
-            return len(check_string) - idx - 1
-
-    raise Exception("Cannot find matching bracket for code.")
+            return code_result
