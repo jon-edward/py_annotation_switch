@@ -38,6 +38,7 @@ class Switch:
         self.with_value = with_value
         self.output = None
         self.scope = {} if scope is None else scope
+        self.scope["default"] = default
 
     def __enter__(self):
         __annotations__.clear()
@@ -84,7 +85,7 @@ class __annotations__(_IAnnotations):
         code = value[idx:-1]
 
         for elem in eval("{" + identifier + "}"):
-            if elem == "default":
+            if elem == default:
                 self.default = code
             else:
                 self.cases[elem] = code
@@ -104,7 +105,10 @@ class __annotations__(_IAnnotations):
                     raise SwitchCaseNotValidError(value)
             else:
                 code = self.default
-        return eval(code, scope)[-1]
+
+        code_result = eval(code, scope)
+
+        return code_result[-1]
 
 
 def _get_matching_bracket_position(check_string: str):
