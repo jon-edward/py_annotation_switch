@@ -9,6 +9,9 @@ from typing import Any, Optional
 _PREDEFINED_CASE = object()
 
 
+__all__ = ["__annotations__", "Switch", "default"]
+
+
 class Config:
     """Defines how switch cases operate."""
     __slots__ = ["keyword", "defaults_to_none", "fallthrough"]
