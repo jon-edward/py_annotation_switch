@@ -16,7 +16,6 @@ class Config:
     def __init__(self):
         self.keyword = "case"
         self.defaults_to_none = True
-        self.fallthrough = False
 
 
 class SwitchCaseNotValidError(Exception):
@@ -38,9 +37,10 @@ class Switch:
     """A context-manager implementation of a switch-case.
 
     Annotations must be in the form:
-    [keyword]: (*case_identifiers, (*statements,))
+    [keyword]: (*case_identifiers, statement)
 
-    Notice: "statements" has to be a tuple.
+    Note: statement can be any type, but if it's a tuple the last item is evaluated as the return value. Otherwise,
+    statement is evaluated as the return value.
     """
 
     def __init__(self, with_value, scope: Optional[dict] = None):
@@ -48,15 +48,16 @@ class Switch:
         self.output = None
         self.scope = {} if scope is None else scope
         self.scope["default"] = default
+        self._annotations: _IAnnotations = __annotations__
 
     def __enter__(self):
-        __annotations__.clear()
+        self._annotations.clear()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Resolves value to a case, runs code associated with case, and forces Switch to be unusable as a Switch
         statement again."""
-        self.output = __annotations__.resolve(self.with_value, self.scope)
-        __annotations__.clear()
+        self.output = self._annotations.resolve(self.with_value, self.scope)
+        self._annotations.clear()
         self.__dict__ = {"output": self.output}
         self.__class__ = OutputWrapper
 
@@ -101,7 +102,7 @@ class _Case:
                 if isinstance(elem, Name) and elem.id == "default":
                     self.is_default_case = True
                 else:
-                    raise CaseIdentifierNotConstantError(f"{elem} -> case identifier number: {ind}")
+                    raise CaseIdentifierNotConstantError(f"{elem} -> case identifier number: {ind + 1}")
             elif ind != len(expr.body.elts) - 1:
                 identifiers.add(elem.value)
             else:
