@@ -9,7 +9,7 @@ from typing import Any, Optional
 _PREDEFINED_CASE = object()
 
 
-__all__ = ["__annotations__", "Switch", "default"]
+__all__ = ["__annotations__", "Switch", "default", "annotations"]
 
 
 class Config:
@@ -81,7 +81,11 @@ class _IAnnotations(ABC):
 
 
 def parse_annotation(val):
-    a = ast.parse(val, mode="eval")
+    try:
+        a = ast.parse(val, mode="eval")
+    except TypeError:
+        raise ImportError("Make sure to include the import 'from __future__ import annotations' at the beginning of "
+                          "your script.")
     if isinstance(a, Expression):
         return a
     else:
