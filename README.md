@@ -9,12 +9,12 @@ You most definitely should not use this in any real capacity, for any project, e
 
 Cases are in the form:
 ```
-[keyword]: (*case identifier[s], (
-  *statements to evaluate,
-))
+[keyword]: (*case identifier[s], 
+ statements
+)
 ```
 
-The return value of the case is what the last item in the statements tuple evaluates to.
+If `statements` is a tuple, the output value of the switch statement is what the last element evaluates to. If `statements` is any other type, it itself is evaluated as the output value.
 
 Simplest case (ha):
 ```py
@@ -25,11 +25,11 @@ switch_case = Switch(3)
 with switch_case:
   case: (0, 1, 2, (
     print("Zero, One, or Two."),
-    3 < 3
+    3 < 3  # False
   ))
   case: (3, (
     print("Three."),
-    3 == 3
+    3 == 3  # True
   ))
 
 print(switch_case.output)  # True
@@ -38,23 +38,21 @@ print(switch_case.output)  # True
 Case with default:
 ```py
 from __future__ import annotations
-from annotation_switch import __annotations__, Switch, default
-# Importing default is not necessary for the code to work as intended,
-# but it's included here to quiet intellisense of common IDEs.
+from annotation_switch import *
 
 switch_case = Switch(5)
 with switch_case:
   case: (0, 1, 2, (
     print("Zero, One, or Two."),
-    5 < 3
+    5 < 3  # False
   ))
   case: (3, (
     print("Three."),
-    5 == 3
+    5 == 3  # False
   ))
   case: ("default", (
     print("What comes after 3?"),
-    5 > 3
+    5 > 3  # True
   ))
 
 print(switch_case.output)  # True
