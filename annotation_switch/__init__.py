@@ -9,23 +9,12 @@ from typing import Any, Optional
 _PREDEFINED_CASE = object()
 
 
-__all__ = ["__annotations__", "Switch", "default", "annotations"]
-
-
-class Config:
-    """Defines how switch cases operate."""
-    __slots__ = ["keyword", "defaults_to_none", "fallthrough"]
-
-    def __init__(self):
-        self.keyword = "case"
-        self.defaults_to_none = True
+__all__ = ["__annotations__", "Switch", "default"]
 
 
 class SwitchCaseNotValidError(Exception):
     pass
 
-
-CONFIG = Config()
 
 default = "default"
 
@@ -46,15 +35,21 @@ class Switch:
     statement is evaluated as the return value.
     """
 
-    def __init__(self, with_value, scope: Optional[dict] = None, ):
+    def __init__(self, with_value, scope: Optional[dict] = None, keyword: str = "case", defaults_to_none: bool = False):
         self.with_value = with_value
         self.output = None
         self.scope = {} if scope is None else scope
         self.scope["default"] = default
+
+        # Options
+        self.keyword = keyword
+        self.defaults_to_none = defaults_to_none
+
         self._annotations: _IAnnotations = __annotations__
 
     def __enter__(self):
         self._annotations.clear()
+        self._annotations.apply_options(keyword=self.keyword, defaults_to_none=self.defaults_to_none)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Resolves value to a case, runs code associated with case, and forces Switch to be unusable as a Switch
@@ -130,9 +125,11 @@ def __c(w):
 class __annotations__(_IAnnotations):
     cases = {}
     default = _PREDEFINED_CASE
+    default_to_none = False
+    keyword = "case"
 
     def __setitem__(self, key, value):
-        if not key == CONFIG.keyword:
+        if not key == self.keyword:
             return
 
         case = _Case(value)
@@ -141,9 +138,15 @@ class __annotations__(_IAnnotations):
         if case.is_default_case:
             self.default = case.code
 
+    def apply_options(self, defaults_to_none: False, keyword: str):
+        self.default_to_none = defaults_to_none
+        self.keyword = keyword
+
     def clear(self):
         self.cases = {}
         self.default = _PREDEFINED_CASE
+        self.keyword = "case"
+        self.default_to_none = False
 
     def resolve(self, value: Any, scope: dict):
 
@@ -154,7 +157,7 @@ class __annotations__(_IAnnotations):
             code_result = compile_and_eval(self.cases[value], scope)
         except KeyError:
             if self.default == _PREDEFINED_CASE:
-                if CONFIG.defaults_to_none:
+                if self.defaults_to_none:
                     code_result = (None,)
                 else:
                     raise SwitchCaseNotValidError(value)
