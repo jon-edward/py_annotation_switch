@@ -9,9 +9,9 @@ You most definitely should not use this in any real capacity, for any project, e
 
 Cases are in the form:
 ```
-[keyword]: (*case identifier[s], (
-  *statements to evaluate,
-))
+[keyword]: (*case identifier[s], 
+ statements
+)
 ```
 
 If `statements` is a tuple, the output value of the switch statement is what the last element evaluates to. If `statements` is any other type, it itself is evaluated as the output value.
