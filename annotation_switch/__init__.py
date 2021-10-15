@@ -46,7 +46,7 @@ class Switch:
     statement is evaluated as the return value.
     """
 
-    def __init__(self, with_value, scope: Optional[dict] = None):
+    def __init__(self, with_value, scope: Optional[dict] = None, ):
         self.with_value = with_value
         self.output = None
         self.scope = {} if scope is None else scope
@@ -111,7 +111,10 @@ class _Case:
                 else:
                     raise CaseIdentifierNotConstantError(f"{elem} -> case identifier number: {ind + 1}")
             elif ind != len(expr.body.elts) - 1:
-                identifiers.add(elem.value)
+                if elem.value == "default":
+                    self.is_default_case = True
+                else:
+                    identifiers.add(elem.value)
             else:
                 code = expr
 
