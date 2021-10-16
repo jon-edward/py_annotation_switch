@@ -51,7 +51,7 @@ class Switch:
 
     def __enter__(self):
         self._annotations.clear()
-        self._annotations.apply_options(keyword=self.keyword, defaults_to_none=self.defaults_to_none)
+        self._annotations.apply_options(keyword=self.keyword, default_to_none=self.defaults_to_none)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Resolves value to a case, runs code associated with case, and forces Switch to be unusable as a Switch
@@ -76,7 +76,7 @@ class _IAnnotations(ABC):
         """Clears the cases in the current context."""
         raise NotImplemented
 
-    def apply_options(self, defaults_to_none: bool = False, keyword: str = _DEFAULT_KEYWORD):
+    def apply_options(self, default_to_none: bool = False, keyword: str = _DEFAULT_KEYWORD):
         """Applies options which will affect how the switch case is resolved."""
         raise NotImplemented
 
@@ -152,8 +152,8 @@ class __annotations__(_IAnnotations):
         if case.is_default_case:
             self.default = case.code
 
-    def apply_options(self, defaults_to_none: bool = False, keyword: str = _DEFAULT_KEYWORD):
-        self.default_to_none = defaults_to_none
+    def apply_options(self, default_to_none: bool = False, keyword: str = _DEFAULT_KEYWORD):
+        self.default_to_none = default_to_none
         self.keyword = keyword
 
     def clear(self):
@@ -171,7 +171,7 @@ class __annotations__(_IAnnotations):
             code_result = compile_and_eval(self.cases[value], scope)
         except KeyError:
             if self.default == _PREDEFINED_CASE:
-                if self.defaults_to_none:
+                if self.default_to_none:
                     code_result = (None,)
                 else:
                     raise SwitchCaseNotValidError(value)
