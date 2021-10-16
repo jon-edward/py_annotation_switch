@@ -82,3 +82,7 @@ with switch_case:
 *Note: After the switch statement is exited at the resolution of the context manager, the `Switch` object is converted to an `OutputWrapper` holding only an `output` member. This is to encourage the user to not reuse the `Switch` object, which might have unintended effects.*
 
 *Also note: `__annotations__` is a required import for the package to function. You can equivalently use the import `from annotation_switch import *` which will perform the import automatically.*
+
+## Limitations
+
+Most notably, switch cases cannot be used within function declarations, and at a minimum `from annotation_switch import __annotations__, Switch` is required for the module to be able to work as expected.
