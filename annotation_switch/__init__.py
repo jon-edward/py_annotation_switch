@@ -3,10 +3,12 @@ from __future__ import annotations
 from abc import ABC
 import ast
 from ast import Expression, Constant, Name
+from ast import Tuple as AstTuple
 from dataclasses import dataclass
 from typing import Any, Optional
 
 _PREDEFINED_CASE = object()
+_DEFAULT_KEYWORD = "case"
 
 
 __all__ = ["__annotations__", "Switch", "default"]
@@ -35,7 +37,7 @@ class Switch:
     statement is evaluated as the return value.
     """
 
-    def __init__(self, with_value, scope: Optional[dict] = None, keyword: str = "case", defaults_to_none: bool = False):
+    def __init__(self, with_value, scope: Optional[dict] = None, keyword: str = _DEFAULT_KEYWORD, defaults_to_none: bool = False):
         self.with_value = with_value
         self.output = None
         self.scope = {} if scope is None else scope
@@ -74,14 +76,25 @@ class _IAnnotations(ABC):
         """Clears the cases in the current context."""
         raise NotImplemented
 
+    def apply_options(self, defaults_to_none: bool = False, keyword: str = _DEFAULT_KEYWORD):
+        """Applies options which will affect how the switch case is resolved."""
+        raise NotImplemented
 
-def parse_annotation(val):
+
+class ITupleExpression(Expression, ABC):
+    """Interface for an Expression with a Tuple as its body."""
+    body: AstTuple
+
+
+def parse_annotation(val) -> ITupleExpression:
     try:
         a = ast.parse(val, mode="eval")
     except TypeError:
         raise ImportError("Make sure to include the import 'from __future__ import annotations' at the beginning of "
                           "your script.")
     if isinstance(a, Expression):
+        if not hasattr(a, "body") or not isinstance(a.body, AstTuple):
+            raise Exception("Annotation has to be able to be evaluated as a tuple.")
         return a
     else:
         raise Exception(f"Invalid AST: {a}")
@@ -94,7 +107,8 @@ class CaseIdentifierNotConstantError(Exception):
 class _Case:
     def __init__(self, value_str: str):
         self.value_str = value_str
-        expr = parse_annotation(value_str)
+        expr: ITupleExpression = parse_annotation(value_str)
+
         identifiers = set()
         code = None
         self.is_default_case = False
@@ -105,7 +119,7 @@ class _Case:
                     self.is_default_case = True
                 else:
                     raise CaseIdentifierNotConstantError(f"{elem} -> case identifier number: {ind + 1}")
-            elif ind != len(expr.body.elts) - 1:
+            elif isinstance(elem, Constant) and ind != len(expr.body.elts) - 1:
                 if elem.value == "default":
                     self.is_default_case = True
                 else:
@@ -138,7 +152,7 @@ class __annotations__(_IAnnotations):
         if case.is_default_case:
             self.default = case.code
 
-    def apply_options(self, defaults_to_none: False, keyword: str):
+    def apply_options(self, defaults_to_none: bool = False, keyword: str = _DEFAULT_KEYWORD):
         self.default_to_none = defaults_to_none
         self.keyword = keyword
 
