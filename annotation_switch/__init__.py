@@ -81,12 +81,12 @@ class _IAnnotations(ABC):
         raise NotImplemented
 
 
-class ITupleExpression(Expression, ABC):
+class _ITupleExpression(Expression, ABC):
     """Interface for an Expression with a Tuple as its body."""
     body: AstTuple
 
 
-def parse_annotation(val) -> ITupleExpression:
+def parse_annotation(val) -> _ITupleExpression:
     try:
         a = ast.parse(val, mode="eval")
     except TypeError:
@@ -107,7 +107,7 @@ class CaseIdentifierNotConstantError(Exception):
 class _Case:
     def __init__(self, value_str: str):
         self.value_str = value_str
-        expr: ITupleExpression = parse_annotation(value_str)
+        expr: _ITupleExpression = parse_annotation(value_str)
 
         identifiers = set()
         code = None
