@@ -85,4 +85,6 @@ with switch_case:
 
 ## Limitations
 
-Most notably, switch cases cannot be used within function declarations, and at a minimum `from annotation_switch import __annotations__, Switch` is required for the module to be able to work as expected.
+Most notably, switch cases can only be used at module-level[^1], and at a minimum `from annotation_switch import __annotations__, Switch` is required for the module to be able to work as expected.
+
+[^1]: Annotations only trigger updates at module-level. Python discards annotations set within function declarations.
